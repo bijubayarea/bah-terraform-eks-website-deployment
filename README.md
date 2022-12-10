@@ -7,14 +7,13 @@ Terraform is a free and open-source infrastructure as code (IAC) that can help t
 
 
 This terraform github repo deploys simple nginx application in EKS cluster
-* Create the Kubernetes deployment using "nginx" image with replicas=2 in node_group_one
+* Create the Kubernetes deployment using "personal-website" image with replicas=2 in node_group_one
 * Create a service of type=LoadBalancer  to expose app for simple external access
-* initContainer of deployment used to manipulate /usr/share/nginx/html/index.html to display
-* Welcome to  POD:\<pod-name\>    NODE:\<node-name\>    NAMESPACE:\<namespace\>   POD_IP:\<pod-ip\>
+
 
 **Desired Output:**
 
-![2](https://github.com/bijubayarea/test-terraform-deploy-nginx-kubernetes-eks/blob/main/images/6.png)
+![2](https://github.com/bijubayarea/bah-terraform-eks-website-deployment/blob/main/images/6.png)
 
 **Prerequisites:**
 
@@ -71,58 +70,17 @@ This terraform github repo deploys simple nginx application in EKS cluster
   }
   ```
  
-**Step 3:  Create `.tf` file for K8s deployment : NGINX webserver** 
+**Step 3:  Create `.tf` file for K8s deployment : Personal website** 
 
 * Create `k8s-deployment.tf` file for VPC and add below content in it
-* Below in yaml format for easier readabilty (But terraform code used to deploy)
 
-  ```
-  spec:
-      initContainers:
-      - name: nginx-init        
-        image: busybox:1.28
-		    
-        env:
-        - name: MY_NODE_NAME
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: spec.nodeName
-        - name: MY_POD_NAME
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.name
-        - name: MY_POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.namespace
-        - name: MY_POD_IP
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: status.podIP
-        command:
-        - sh
-        - -c
-        - echo Welcome to POD:$(MY_POD_NAME) NODE:$(MY_NODE_NAME) NAMESPACE:$(MY_POD_NAMESPACE)
-          POD_IP:$(MY_POD_IP)> /work-dir/index.html
-        
-        volumeMounts:
-        - mountPath: /work-dir
-          mountPropagation: None
-          name: workdir
-  ```
-* create k8s deployment "nginx" with replicas=2
-* pod containers: one is initContainer=nginx-init and container=nginx-pod-node
-* intContainer used to get environment variables: POD_NAME and NODE_NAME and write to /usr/share/nginx/html/index.html
-* pod ephemeral volume EmptyDir is attached to pod and mounted on both containers 
+* create k8s deployment "personal-website" with replicas=2
+* pod containers: iamge=personal-website:v2.1
 
   ```
   containers:
-      - name: nginx-pod-node
-        image: nginx:1.7.8
+      - name: personal-website
+        image: docker.io/bijubayarea/personal-website:v2.1
         ports:
         - containerPort: 80
           protocol: TCP
@@ -133,14 +91,7 @@ This terraform github repo deploys simple nginx application in EKS cluster
           requests:
             cpu: 250m
             memory: 50Mi
-        volumeMounts:
-        - mountPath: /usr/share/nginx/html
-          mountPropagation: None
-          name: workdir
       
-      volumes:
-      - emptyDir: {}
-        name: workdir
   ```
 
 **Step 4: Create .tf file to expose k8s deploy as service=Loadbalancer**
@@ -153,6 +104,8 @@ This terraform github repo deploys simple nginx application in EKS cluster
   kind: Service
   metadata:
     name: nginx-service
+    labels:
+      personal-website
   spec:
     ports:
     - nodePort: 31754
@@ -160,7 +113,7 @@ This terraform github repo deploys simple nginx application in EKS cluster
       protocol: TCP
       targetPort: 80
     selector:
-      App: nginx-pod-node
+      app: personal-website
     type: LoadBalancer
   ```
   
@@ -171,18 +124,25 @@ This terraform github repo deploys simple nginx application in EKS cluster
 
   ```
   output "lb_ip" {
-    value = kubernetes_service.nginx.status.0.load_balancer.0.ingress.0.hostname
+    value = kubernetes_service.web-service.status.0.load_balancer.0.ingress.0.hostname
   }
 
   ```
 * output the name of the LoadBalancer.
+
+ ```
+  Outputs:
+
+  load_balancer_ip = "a5499191dfdf84a67806f20ef474042c-986305581.us-west-2.elb.amazonaws.com"
+
+  ```
 
 
 **Step 6: Store our code to GitHub Repository**
 
 * store the code in the GitHub repository
 
-![2](https://github.com/bijubayarea/test-terraform-deploy-nginx-kubernetes-eks/blob/main/images/2.png)
+![2](https://github.com/bijubayarea/bah-terraform-eks-website-deployment/blob/main/images/2.png)
 
 **Step 7: Initialize the working directory**
 
@@ -195,7 +155,7 @@ This terraform github repo deploys simple nginx application in EKS cluster
   ```
   Plan: 6 to add, 0 to change, 0 to destroy.
   Changes to Outputs:
-  + lb_ip           = (known after apply)
+  + load_balancer_ip           = (known after apply)
 
   ```
 
@@ -215,7 +175,7 @@ This terraform github repo deploys simple nginx application in EKS cluster
 
   ```
   $ terraform output
-  lb_ip = "ac32240ec0119446cbbad59de348fd7e-2131601910.us-west-2.elb.amazonaws.com"
+  load_balancer_ip = "a5499191dfdf84a67806f20ef474042c-986305581.us-west-2.elb.amazonaws.com"
 
   ```
 
@@ -237,21 +197,23 @@ This terraform github repo deploys simple nginx application in EKS cluster
 1. k8s deployment:
   ```
   $ kubectl get nodes
-  NAME                                       STATUS   ROLES    AGE   VERSION
-  ip-10-0-1-118.us-west-2.compute.internal   Ready    <none>   13h   v1.23.9-eks-ba74326
-  ip-10-0-2-251.us-west-2.compute.internal   Ready    <none>   13h   v1.23.9-eks-ba74326
+  NAME                                       STATUS   ROLES    AGE    VERSION
+  ip-10-0-1-233.us-west-2.compute.internal   Ready    <none>   117m   v1.23.13-eks-fb459a0
+  ip-10-0-1-68.us-west-2.compute.internal    Ready    <none>   117m   v1.23.13-eks-fb459a0
+  ip-10-0-2-5.us-west-2.compute.internal     Ready    <none>   117m   v1.23.13-eks-fb459a0
+  ip-10-0-3-251.us-west-2.compute.internal   Ready    <none>   117m   v1.23.13-eks-fb459a0
   
-  $ kubectl get deploy nginx -o wide
-  NAME    READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES        SELECTOR
-  nginx   2/2     2            2           9h    nginx-pod-node   nginx:1.7.8   App=nginx-pod-node
+  $  kubectl get deploy personal-website -o wide
+  NAME               READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS         IMAGES                                        SELECTOR
+  personal-website   2/2     2            2           98m   personal-website   docker.io/bijubayarea/personal-website:v2.1   app=personal-website
   
   $ kubectl  get pods -o wide
-  NAME                    READY   STATUS    RESTARTS   AGE   IP           NODE                                       NOMINATED NODE   READINESS GATES
-  nginx-b4988fd99-5hvj8   1/1     Running   0          9h    10.0.1.100   ip-10-0-1-118.us-west-2.compute.internal   <none>           <none>
-  nginx-b4988fd99-pk2cz   1/1     Running   0          9h    10.0.2.90    ip-10-0-2-251.us-west-2.compute.internal   <none>           <none>
+  NAME                                READY   STATUS    RESTARTS   AGE   IP           NODE                                       NOMINATED NODE   READINESS GATES
+  personal-website-698d8c97b4-hhgx7   1/1     Running   0          37m   10.0.1.193   ip-10-0-1-233.us-west-2.compute.internal   <none>           <none>
+  personal-website-698d8c97b4-p8qmk   1/1     Running   0          37m   10.0.2.144   ip-10-0-2-5.us-west-2.compute.internal     <none>           <none>
 
   ```
-![3](https://github.com/bijubayarea/test-terraform-deploy-nginx-kubernetes-eks/blob/main/images/3.png)
+![3](https://github.com/bijubayarea/bah-terraform-eks-website-deployment/blob/main/images/3.png)
 
 2. k8s service=LoadBalancer:
    ```
@@ -281,7 +243,7 @@ This terraform github repo deploys simple nginx application in EKS cluster
    Events:                   <none>
 
    ```
-![4](https://github.com/bijubayarea/test-terraform-deploy-nginx-kubernetes-eks/blob/main/images/4.png)
+![4](https://github.com/bijubayarea/bah-terraform-eks-website-deployment/blob/main/images/4.png)
 
 
 * Kubernetes cluster is ready 
@@ -313,4 +275,4 @@ This terraform github repo deploys simple nginx application in EKS cluster
   Welcome to POD:nginx-b4988fd99-5hvj8 NODE:ip-10-0-1-118.us-west-2.compute.internal NAMESPACE:default POD_IP:10.0.1.100
 
   ```
-  ![5](https://github.com/bijubayarea/test-terraform-deploy-nginx-kubernetes-eks/blob/main/images/5.png)
+  ![5](https://github.com/bijubayarea/bah-terraform-eks-website-deployment/blob/main/images/5.png)

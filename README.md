@@ -218,26 +218,26 @@ This terraform github repo deploys simple nginx application in EKS cluster
 2. k8s service=LoadBalancer:
    ```
    $ kubectl get svc -o wide
-   NAME            TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)        AGE   SELECTOR
-   kubernetes      ClusterIP      172.20.0.1       <none>                                                                    443/TCP        13h   <none>
-   nginx-service   LoadBalancer   172.20.146.252   ac32240ec0119446cbbad59de348fd7e-2131601910.us-west-2.elb.amazonaws.com   80:31754/TCP   9h    App=nginx-pod-node
-   
-   $ kubectl describe svc nginx-service 
-   Name:                     nginx-service
+   NAME          TYPE           CLUSTER-IP      EXTERNAL-IP                                                              PORT(S)        AGE    SELECTOR
+   kubernetes    ClusterIP      172.20.0.1      <none>                                                                   443/TCP        125m   <none>
+   web-service   LoadBalancer   172.20.114.52   a5499191dfdf84a67806f20ef474042c-986305581.us-west-2.elb.amazonaws.com   80:30100/TCP   100m   app=personal-website
+      
+   $ kubectl describe svc web-service
+   Name:                     web-service
    Namespace:                default
    Labels:                   <none>
    Annotations:              <none>
-   Selector:                 App=nginx-pod-node
+   Selector:                 app=personal-website
    Type:                     LoadBalancer
    IP Family Policy:         SingleStack
    IP Families:              IPv4
-   IP:                       172.20.146.252
-   IPs:                      172.20.146.252
-   LoadBalancer Ingress:     ac32240ec0119446cbbad59de348fd7e-2131601910.us-west-2.elb.amazonaws.com
+   IP:                       172.20.114.52
+   IPs:                      172.20.114.52
+   LoadBalancer Ingress:     a5499191dfdf84a67806f20ef474042c-986305581.us-west-2.elb.amazonaws.com
    Port:                     <unset>  80/TCP
    TargetPort:               80/TCP
-   NodePort:                 <unset>  31754/TCP
-   Endpoints:                10.0.1.100:80,10.0.2.90:80
+   NodePort:                 <unset>  30100/TCP
+   Endpoints:                10.0.1.193:80,10.0.2.144:80
    Session Affinity:         None
    External Traffic Policy:  Cluster
    Events:                   <none>
@@ -250,29 +250,5 @@ This terraform github repo deploys simple nginx application in EKS cluster
 * Verify access to NGINX application using browser or 'curl' command
 
 
-**Step 13: Access NGINX using 'curl' & browser**
 
-* Access the NBINX server, confirm load balance fucntionality provided by k8s service
-* NBINX server displays POD_NAME, NODE_NAME, POD_NAMESPACE & POD_IP
-
-  ```
-  $ curl -s ac32240ec0119446cbbad59de348fd7e-2131601910.us-west-2.elb.amazonaws.com
-  Welcome to POD:nginx-b4988fd99-pk2cz NODE:ip-10-0-2-251.us-west-2.compute.internal NAMESPACE:default POD_IP:10.0.2.90
-  
-  $ curl -s ac32240ec0119446cbbad59de348fd7e-2131601910.us-west-2.elb.amazonaws.com
-  Welcome to POD:nginx-b4988fd99-5hvj8 NODE:ip-10-0-1-118.us-west-2.compute.internal NAMESPACE:default POD_IP:10.0.1.100
-  
-  $ curl -s ac32240ec0119446cbbad59de348fd7e-2131601910.us-west-2.elb.amazonaws.com
-  Welcome to POD:nginx-b4988fd99-pk2cz NODE:ip-10-0-2-251.us-west-2.compute.internal NAMESPACE:default POD_IP:10.0.2.90
-  
-  $ curl -s ac32240ec0119446cbbad59de348fd7e-2131601910.us-west-2.elb.amazonaws.com
-  Welcome to POD:nginx-b4988fd99-pk2cz NODE:ip-10-0-2-251.us-west-2.compute.internal NAMESPACE:default POD_IP:10.0.2.90
-  
-  $ curl -s ac32240ec0119446cbbad59de348fd7e-2131601910.us-west-2.elb.amazonaws.com
-  Welcome to POD:nginx-b4988fd99-pk2cz NODE:ip-10-0-2-251.us-west-2.compute.internal NAMESPACE:default POD_IP:10.0.2.90
-  
-  $ curl -s ac32240ec0119446cbbad59de348fd7e-2131601910.us-west-2.elb.amazonaws.com
-  Welcome to POD:nginx-b4988fd99-5hvj8 NODE:ip-10-0-1-118.us-west-2.compute.internal NAMESPACE:default POD_IP:10.0.1.100
-
-  ```
-  ![5](https://github.com/bijubayarea/bah-terraform-eks-website-deployment/blob/main/images/5.png)
+  ![5](https://github.com/bijubayarea/bah-terraform-eks-website-deployment/blob/main/images/6.png)

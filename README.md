@@ -252,3 +252,14 @@ This terraform github repo deploys simple nginx application in EKS cluster
 
 
   ![5](https://github.com/bijubayarea/bah-terraform-eks-website-deployment/blob/main/images/6.png)
+
+
+**Step 12: Delete resources on AWS**
+
+* Destroy terraform resources
+
+ ```
+  terraform destroy -auto-approve
+
+  Destroy complete! Resources: 2 destroyed.
+  ```
